@@ -1,0 +1,6 @@
+{
+  "name": "VgoCraft",
+  "description": "Professional Academic Writing & Research Assistance Platform with an integrated pricing calculator, UPI payment portal, support ticketing, and an elite research portfolio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
