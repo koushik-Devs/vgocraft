@@ -18,18 +18,23 @@ dotenv.config();
 
 const app = express();
 const PORT = 3000;
-const JWT_SECRET = process.env.JWT_SECRET || "vgocraft-super-secret-key-2026";
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!JWT_SECRET || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  throw new Error("JWT_SECRET, ADMIN_EMAIL, and ADMIN_PASSWORD must be configured");
+}
 
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 // Pre-seed single Admin account if it does not exist
 async function preseedAdmin() {
-  const adminEmail = "koushikmondal.me@outlook.com";
+  const adminEmail = ADMIN_EMAIL;
   try {
     const adminExists = await db.users.findOne({ email: adminEmail });
     if (!adminExists) {
-      const passwordHash = await bcrypt.hash("vgoAdmin2026!", 10);
+      const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
       await db.users.create({
         id: "admin-koushik",
         name: "Koushik Mondal (Admin)",
@@ -38,9 +43,9 @@ async function preseedAdmin() {
         role: "admin",
         isEmailVerified: true,
       });
-      console.log(`🛡️ Admin pre-seeded successfully: ${adminEmail} / password: vgoAdmin2026!`);
+      console.log("🛡️ Admin pre-seeded successfully.");
     } else {
-      console.log(`🛡️ Admin account already pre-seeded: ${adminEmail}`);
+      console.log("🛡️ Admin account already pre-seeded.");
     }
   } catch (err) {
     console.error("Error seeding admin user:", err);
@@ -500,7 +505,7 @@ app.post("/api/orders", authenticateToken, async (req: any, res) => {
     });
 
     // Notify Admin (preseeded/seeded admins receive alert)
-    const adminEmail = "koushikmondal.me@outlook.com";
+    const adminEmail = ADMIN_EMAIL;
     await sendEmail({
       to: adminEmail,
       subject: `🚨 New VgoCraft Order Recieved - Awaiting Verification [${order.id}]`,
@@ -579,7 +584,7 @@ app.post("/api/orders/:id/revision", authenticateToken, async (req: any, res) =>
     );
 
     // Create Admin notification
-    const adminEmail = "koushikmondal.me@outlook.com";
+    const adminEmail = ADMIN_EMAIL;
     await sendEmail({
       to: adminEmail,
       subject: `⚠️ Revision Requested - Order [${order.id}]`,
@@ -702,7 +707,7 @@ app.post("/api/tickets", authenticateToken, async (req: any, res) => {
     });
 
     // Notify Admin
-    const adminEmail = "koushikmondal.me@outlook.com";
+    const adminEmail = ADMIN_EMAIL;
     await sendEmail({
       to: adminEmail,
       subject: `🎟️ New Support Ticket Opened [${ticket.id}]`,
@@ -788,7 +793,7 @@ app.post("/api/tickets/:id/reply", authenticateToken, async (req: any, res) => {
       });
     } else {
       // Client replied, notify admin
-      const adminEmail = "koushikmondal.me@outlook.com";
+      const adminEmail = ADMIN_EMAIL;
       await sendEmail({
         to: adminEmail,
         subject: `🎟️ User Reply - Ticket [${ticket.id}]`,
